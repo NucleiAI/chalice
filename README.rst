@@ -131,7 +131,7 @@ in python3.7::
 
 Next we'll install Chalice using ``pip``::
 
-    $ python3 -m pip install chalice
+    $ python3 -m pip install chalice-nuclei-ai
 
 You can verify you have chalice installed by running::
 
