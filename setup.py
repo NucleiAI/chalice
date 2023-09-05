@@ -34,13 +34,13 @@ install_requires = [
 ]
 
 setup(
-    name='chalice',
+    name='chalice-nuclei-ai',
     version='1.29.0',
-    description="Microframework",
+    description="Microframework - Nuclei FORK",
     long_description=README,
-    author="James Saryerwinnie",
-    author_email='js@jamesls.com',
-    url='https://github.com/aws/chalice',
+    author="Nuclei AI",
+    author_email='dev@nuclei.ai',
+    url='https://github.com/NucleiAI/chalice',
     packages=find_packages(exclude=['tests', 'tests.*']),
     install_requires=install_requires,
     extras_require={

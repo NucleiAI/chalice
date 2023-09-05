@@ -1,6 +1,11 @@
 ===========
-AWS Chalice
+AWS Chalice - Nuclei Fork
 ===========
+
+This is a fork of aws/chalice which contains custom features:
+
+* Added option to configure the Ephemeral Storage available to a function.
+
 
 .. image:: https://badges.gitter.im/awslabs/chalice.svg
    :target: https://gitter.im/awslabs/chalice?utm_source=badge&utm_medium=badge
@@ -13,6 +18,7 @@ AWS Chalice
 .. image:: https://aws.github.io/chalice/_images/chalice-logo-whitespace.png
    :target: https://aws.github.io/chalice/
    :alt: Chalice Logo
+
 
 
 Chalice is a framework for writing serverless apps in python. It allows
