@@ -5,6 +5,7 @@ AWS Chalice - Nuclei Fork
 This is a fork of aws/chalice which contains custom features:
 
 * Added option to configure the Ephemeral Storage available to a function.
+* Added option to configure Maximum Concurrency for an SQS trigger.
 
 
 .. image:: https://badges.gitter.im/awslabs/chalice.svg
