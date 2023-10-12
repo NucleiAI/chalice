@@ -1,15 +1,16 @@
-import os
 import json
-import mock
+import os
 
+import mock
 import pytest
-from chalice.config import Config
+
 from chalice import package
-from chalice.constants import LAMBDA_TRUST_POLICY
-from chalice.deploy.appgraph import ApplicationGraphBuilder, DependencyBuilder
 from chalice.awsclient import TypedAWSClient
-from chalice.deploy.deployer import BuildStage
+from chalice.config import Config
+from chalice.constants import LAMBDA_TRUST_POLICY
 from chalice.deploy import models
+from chalice.deploy.appgraph import ApplicationGraphBuilder, DependencyBuilder
+from chalice.deploy.deployer import BuildStage
 from chalice.deploy.swagger import SwaggerGenerator
 from chalice.package import PackageOptions
 from chalice.utils import OSUtils
@@ -725,7 +726,8 @@ class TestTerraformTemplate(TemplateTestBase):
                }
 
     def test_can_package_sqs_handler(self, sample_app):
-        @sample_app.on_sqs_message(queue='foo', batch_size=5)
+        @sample_app.on_sqs_message(queue='foo', batch_size=5,
+                                   maximum_concurrency=10)
         def handler(event):
             pass
 
@@ -744,7 +746,8 @@ class TestTerraformTemplate(TemplateTestBase):
                        '${data.aws_caller_identity.chalice.account_id}:foo'),
                    'function_name': '${aws_lambda_function.handler.arn}',
                    'batch_size': 5,
-                   'maximum_batching_window_in_seconds': 0
+                   'maximum_batching_window_in_seconds': 0,
+                   'scaling_config': {'maximum_concurrency': 10}
         }
 
     def test_sqs_arn_does_not_use_fn_sub(self, sample_app):

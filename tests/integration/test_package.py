@@ -1,20 +1,19 @@
-import os
-import sys
-import stat
-import uuid
 import fnmatch
-from zipfile import ZipFile
 import hashlib
+import os
+import stat
+import sys
+import uuid
 from contextlib import contextmanager
+from zipfile import ZipFile
 
-from click.testing import CliRunner
 import pytest
+from click.testing import CliRunner
 
 from chalice import cli
 from chalice.cli import factory
 from chalice.cli.newproj import create_new_project_skeleton
 from chalice.deploy.packager import NoSuchPackageError
-
 
 PY_VERSION = sys.version_info[:2]
 VERSION_CUTOFF = (3, 9)
@@ -214,7 +213,7 @@ class TestPackage(object):
     @pytest.mark.skipif(sys.version_info[0] == 2,
                         reason='pandas==1.1.5 is only suported on py3.')
     def test_can_package_pandas(self, runner, app_skeleton, no_local_config):
-        version = '1.5.3' if sys.version_info[1] >= 10 else '1.1.5'
+        version = '1.5.3' if sys.version_info[1] >= 8 else '1.1.5'
         assert_can_package_dependency(
             runner,
             app_skeleton,

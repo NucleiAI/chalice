@@ -1,18 +1,22 @@
-import mock
-
-import pytest
-from dataclasses import replace, dataclass
+from dataclasses import dataclass, replace
 from typing import Tuple
 
-from chalice.awsclient import TypedAWSClient, ResourceDoesNotExistError
-from chalice.deploy import models
+import mock
+import pytest
+
+from chalice.awsclient import ResourceDoesNotExistError, TypedAWSClient
 from chalice.config import DeployedResources
-from chalice.utils import OSUtils
-from chalice.deploy.planner import PlanStage, Variable, RemoteState, \
-    KeyDataVariable
-from chalice.deploy.planner import StringFormat
+from chalice.deploy import models
 from chalice.deploy.models import APICall
+from chalice.deploy.planner import (
+    KeyDataVariable,
+    PlanStage,
+    RemoteState,
+    StringFormat,
+    Variable,
+)
 from chalice.deploy.sweeper import ResourceSweeper
+from chalice.utils import OSUtils
 
 
 def create_function_resource(name, function_name=None,
@@ -1745,7 +1749,8 @@ class TestPlanSQSSubscription(BasePlannerTests):
             queue='myqueue',
             batch_size=10,
             lambda_function=function,
-            maximum_batching_window_in_seconds=60
+            maximum_batching_window_in_seconds=60,
+            maximum_concurrency=10
         )
         plan = self.determine_plan(sqs_event_source)
         plan_parse_arn = plan[:5]
@@ -1786,6 +1791,7 @@ class TestPlanSQSSubscription(BasePlannerTests):
                 ),
                 'batch_size': 10,
                 'maximum_batching_window_in_seconds': 60,
+                'maximum_concurrency': 10,
                 'function_name': Variable("function_name_lambda_arn")
             },
             output_var='function_name-sqs-event-source_uuid'
@@ -1809,7 +1815,8 @@ class TestPlanSQSSubscription(BasePlannerTests):
             queue=models.QueueARN(arn='arn:us-west-2:myqueue'),
             batch_size=10,
             lambda_function=function,
-            maximum_batching_window_in_seconds=0
+            maximum_batching_window_in_seconds=0,
+            maximum_concurrency=10
         )
         plan = self.determine_plan(sqs_event_source)
         assert plan[0] == models.StoreValue(
@@ -1824,6 +1831,7 @@ class TestPlanSQSSubscription(BasePlannerTests):
                 ),
                 'batch_size': 10,
                 'maximum_batching_window_in_seconds': 0,
+                'maximum_concurrency': 10,
                 'function_name': Variable("function_name_lambda_arn")
             },
             output_var='function_name-sqs-event-source_uuid'
@@ -1847,7 +1855,8 @@ class TestPlanSQSSubscription(BasePlannerTests):
             queue=models.QueueARN(arn='arn:sqs:myqueue'),
             batch_size=10,
             lambda_function=function,
-            maximum_batching_window_in_seconds=0
+            maximum_batching_window_in_seconds=0,
+            maximum_concurrency=10,
         )
         self.remote_state.declare_resource_exists(
             sqs_event_source,
@@ -1868,6 +1877,7 @@ class TestPlanSQSSubscription(BasePlannerTests):
                 'event_uuid': 'my-uuid',
                 'batch_size': 10,
                 'maximum_batching_window_in_seconds': 0,
+                'maximum_concurrency': 10,
             },
         )
         self.assert_recorded_values(
@@ -1886,7 +1896,8 @@ class TestPlanSQSSubscription(BasePlannerTests):
             queue='myqueue',
             batch_size=10,
             lambda_function=function,
-            maximum_batching_window_in_seconds=0
+            maximum_batching_window_in_seconds=0,
+            maximum_concurrency=10,
         )
         self.remote_state.declare_resource_exists(
             sqs_event_source,
@@ -1930,6 +1941,7 @@ class TestPlanSQSSubscription(BasePlannerTests):
                 'event_uuid': 'my-uuid',
                 'batch_size': 10,
                 'maximum_batching_window_in_seconds': 0,
+                'maximum_concurrency': 10,
             },
         )
         self.assert_recorded_values(
@@ -2483,7 +2495,8 @@ class TestRemoteState(object):
         event_source = models.SQSEventSource(
             resource_name='handler-sqs-event-source',
             maximum_batching_window_in_seconds=0,
-            queue=new_queue, batch_size=100, lambda_function=None
+            queue=new_queue, batch_size=100, lambda_function=None,
+            maximum_concurrency=None
         )
         if deployed_queue is not None:
             deployed_resources = {
@@ -2985,7 +2998,8 @@ class TestUnreferencedResourcePlanner(BasePlannerTests):
                 queue='my-queue',
                 batch_size=10,
                 lambda_function=create_function_resource('function_name'),
-                maximum_batching_window_in_seconds=0
+                maximum_batching_window_in_seconds=0,
+                maximum_concurrency=None,
             )
         )
         deployed = {
@@ -3038,7 +3052,8 @@ class TestUnreferencedResourcePlanner(BasePlannerTests):
                 queue='my-new-queue',
                 batch_size=10,
                 lambda_function=create_function_resource('function_name'),
-                maximum_batching_window_in_seconds=0
+                maximum_batching_window_in_seconds=0,
+                maximum_concurrency=None
             )
         )
         config = FakeConfig(deployed)

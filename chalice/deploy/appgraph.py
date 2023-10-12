@@ -1,12 +1,11 @@
 import json
 import os
 from dataclasses import asdict
+from typing import Any, Dict, List, Optional, Set, Text, Tuple, \
+    Union, cast  # noqa
 
-from typing import cast
-from typing import Dict, List, Tuple, Any, Set, Optional, Text, Union  # noqa
-
-from chalice.config import Config  # noqa
 from chalice import app
+from chalice.config import Config  # noqa
 from chalice.constants import LAMBDA_TRUST_POLICY
 from chalice.deploy import models
 from chalice.utils import UI  # noqa
@@ -665,6 +664,7 @@ class ApplicationGraphBuilder(object):
             batch_size=sqs_config.batch_size,
             lambda_function=lambda_function,
             maximum_batching_window_in_seconds=batch_window,
+            maximum_concurrency=sqs_config.maximum_concurrency
         )
         return sqs_event_source
 

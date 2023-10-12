@@ -4,26 +4,22 @@ import copy
 import json
 import os
 import re
+from typing import Any, Dict, List, Optional, Set, Union, cast  # noqa
 
 import six
-from typing import Any, Optional, Dict, List, Set, Union  # noqa
-from typing import cast
-
 import yaml
+from yaml.nodes import MappingNode, Node, ScalarNode, SequenceNode
 from yaml.scanner import ScannerError
-from yaml.nodes import Node, ScalarNode, SequenceNode, MappingNode
 
-from chalice.deploy.swagger import (
-    CFNSwaggerGenerator, TerraformSwaggerGenerator)
-from chalice.utils import (
-    OSUtils, UI, serialize_to_json, to_cfn_resource_name
-)
 from chalice.awsclient import TypedAWSClient  # noqa
 from chalice.config import Config  # noqa
 from chalice.deploy import models
 from chalice.deploy.appgraph import ApplicationGraphBuilder, DependencyBuilder
 from chalice.deploy.deployer import BuildStage  # noqa
 from chalice.deploy.deployer import create_build_stage
+from chalice.deploy.swagger import CFNSwaggerGenerator, \
+    TerraformSwaggerGenerator
+from chalice.utils import UI, OSUtils, serialize_to_json, to_cfn_resource_name
 
 
 def create_app_packager(
@@ -667,9 +663,15 @@ class SAMTemplateGenerator(TemplateGenerator):
                     'BatchSize': resource.batch_size,
                     'MaximumBatchingWindowInSeconds':
                         resource.maximum_batching_window_in_seconds,
+
                 }
             }
         }
+        if resource.maximum_concurrency:
+            function_cfn['Properties']['Events'][sqs_cfn_name]['Properties'][
+                'ScalingConfig'] = {
+                'MaximumConcurrency': resource.maximum_concurrency
+            }
 
     def _generate_kinesiseventsource(self, resource, template):
         # type: (models.KinesisEventSource, Dict[str, Any]) -> None
@@ -1131,6 +1133,11 @@ class TerraformGenerator(TemplateGenerator):
                 resource.maximum_batching_window_in_seconds,
             'function_name': self._fref(resource.lambda_function)
         }
+        if resource.maximum_concurrency:
+            template['resource']['aws_lambda_event_source_mapping'][
+                resource.resource_name][
+                'scaling_config'] = {
+                    'maximum_concurrency': resource.maximum_concurrency}
 
     def _generate_kinesiseventsource(self, resource, template):
         # type: (models.KinesisEventSource, Dict[str, Any]) -> None

@@ -15,45 +15,43 @@ this class to get improved type checking across chalice.
 """
 from __future__ import annotations
 
+import json
+
 # pylint: disable=too-many-lines
 import os
-import time
-import tempfile
-from datetime import datetime
-import zipfile
-import shutil
-import json
 import re
+import shutil
+import tempfile
+import time
 import uuid
+import zipfile
 from collections import OrderedDict
-from typing import (
-    Any,
-    Optional,
-    Dict,
-    Callable,
-    List,
-    Iterator,
-    Iterable,
-    Sequence,
+from datetime import datetime
+from typing import (  # noqa
     IO,
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
     Tuple,
     Union,
-)  # noqa
+)
 
 import botocore.session  # noqa
-from botocore.loaders import create_loader
 from botocore.exceptions import ClientError
+from botocore.loaders import create_loader
 from botocore.utils import datetime2timestamp
-from botocore.vendored.requests import (
-    ConnectionError as RequestsConnectionError,
-)
-from botocore.vendored.requests.exceptions import (
-    ReadTimeout as RequestsReadTimeout,
-)
+from botocore.vendored.requests import ConnectionError as \
+    RequestsConnectionError
+from botocore.vendored.requests.exceptions import ReadTimeout as \
+    RequestsReadTimeout
 from typing_extensions import TypedDict
 
-from chalice.constants import DEFAULT_STAGE_NAME
-from chalice.constants import MAX_LAMBDA_DEPLOYMENT_SIZE
+from chalice.constants import DEFAULT_STAGE_NAME, MAX_LAMBDA_DEPLOYMENT_SIZE
 from chalice.vendored.botocore.regions import EndpointResolver
 
 StrMap = Optional[Dict[str, str]]
@@ -1858,6 +1856,7 @@ class TypedAWSClient(object):
         batch_size: int,
         starting_position: Optional[str] = None,
         maximum_batching_window_in_seconds: Optional[int] = 0,
+        maximum_concurrency: Optional[int] = None,
     ) -> None:
         lambda_client = self._client('lambda')
         batch_window = maximum_batching_window_in_seconds
@@ -1869,6 +1868,9 @@ class TypedAWSClient(object):
         }
         if starting_position is not None:
             kwargs['StartingPosition'] = starting_position
+        if maximum_concurrency:
+            kwargs['ScalingConfig'] = {
+                'MaximumConcurrency': maximum_concurrency}
         return self._call_client_method_with_retries(
             lambda_client.create_event_source_mapping,
             kwargs,
@@ -1880,6 +1882,7 @@ class TypedAWSClient(object):
         event_uuid: str,
         batch_size: int,
         maximum_batching_window_in_seconds: Optional[int] = 0,
+        maximum_concurrency: Optional[int] = None,
     ) -> None:
         lambda_client = self._client('lambda')
         batch_window = maximum_batching_window_in_seconds
@@ -1888,6 +1891,10 @@ class TypedAWSClient(object):
             'BatchSize': batch_size,
             'MaximumBatchingWindowInSeconds': batch_window,
         }
+        if maximum_concurrency:
+            kwargs['ScalingConfig'] = {
+                'MaximumConcurrency': maximum_concurrency
+            }
         self._call_client_method_with_retries(
             lambda_client.update_event_source_mapping,
             kwargs,

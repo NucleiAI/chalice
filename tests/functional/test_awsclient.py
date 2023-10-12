@@ -1,22 +1,24 @@
-import json
 import datetime
+import json
 import time
 
-import pytest
-import mock
 import botocore.exceptions
+import mock
+import pytest
+from botocore import stub
+from botocore.utils import datetime2timestamp
 from botocore.vendored.requests import ConnectionError as \
     RequestsConnectionError
 from botocore.vendored.requests.exceptions import ReadTimeout as \
     RequestsReadTimeout
-from botocore import stub
-from botocore.utils import datetime2timestamp
 
-from chalice.awsclient import TypedAWSClient
-from chalice.awsclient import ResourceDoesNotExistError
-from chalice.awsclient import DeploymentPackageTooLargeError
-from chalice.awsclient import LambdaClientError
-from chalice.awsclient import ReadTimeout
+from chalice.awsclient import (
+    DeploymentPackageTooLargeError,
+    LambdaClientError,
+    ReadTimeout,
+    ResourceDoesNotExistError,
+    TypedAWSClient,
+)
 
 
 def create_policy_statement(source_arn, service_name, statement_id,
@@ -3664,20 +3666,23 @@ def test_can_create_sqs_event_source(stubbed_session):
     function_name = 'myfunction'
     batch_size = 100
     maximum_batching_window_in_seconds = 60
+    maximum_concurrency = 10
 
     lambda_stub = stubbed_session.stub('lambda')
     lambda_stub.create_event_source_mapping(
         EventSourceArn=queue_arn,
         FunctionName=function_name,
         BatchSize=batch_size,
-        MaximumBatchingWindowInSeconds=maximum_batching_window_in_seconds
+        MaximumBatchingWindowInSeconds=maximum_batching_window_in_seconds,
+        ScalingConfig={'MaximumConcurrency': maximum_concurrency}
     ).returns({'UUID': 'my-uuid'})
 
     stubbed_session.activate_stubs()
     client = TypedAWSClient(stubbed_session)
     result = client.create_lambda_event_source(
         queue_arn, function_name, batch_size,
-        maximum_batching_window_in_seconds=maximum_batching_window_in_seconds
+        maximum_batching_window_in_seconds=maximum_batching_window_in_seconds,
+        maximum_concurrency=maximum_concurrency
     )
     assert result == 'my-uuid'
     stubbed_session.verify_stubs()
@@ -3788,13 +3793,15 @@ def test_can_retry_update_event_source_batching_window(stubbed_session):
         UUID='my-uuid',
         BatchSize=5,
         MaximumBatchingWindowInSeconds=60,
+        ScalingConfig={'MaximumConcurrency': 10}
     ).returns({})
 
     stubbed_session.activate_stubs()
     client = TypedAWSClient(stubbed_session)
     client.update_lambda_event_source(
         event_uuid='my-uuid', batch_size=5,
-        maximum_batching_window_in_seconds=60
+        maximum_batching_window_in_seconds=60,
+        maximum_concurrency=10
     )
     stubbed_session.verify_stubs()
 

@@ -1,16 +1,14 @@
 # pylint: disable=too-many-lines
-import re
 import json
+import re
 from collections import OrderedDict
-
-from typing import List, Dict, Any, Optional, Union, Tuple, Set, cast  # noqa
 from typing import Sequence  # noqa
+from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast  # noqa
 
+from chalice.awsclient import ResourceDoesNotExistError, TypedAWSClient  # noqa
 from chalice.config import Config, DeployedResources  # noqa
-from chalice.utils import OSUtils  # noqa
 from chalice.deploy import models
-from chalice.awsclient import TypedAWSClient, ResourceDoesNotExistError  # noqa
-
+from chalice.utils import OSUtils  # noqa
 
 InstructionMsg = Union[models.Instruction, Tuple[models.Instruction, str]]
 MarkedResource = Dict[str, List[models.RecordResource]]
@@ -736,7 +734,9 @@ class PlanStage(object):
                     params={'event_uuid': uuid,
                             'batch_size': resource.batch_size,
                             'maximum_batching_window_in_seconds':
-                                resource.maximum_batching_window_in_seconds}
+                                resource.maximum_batching_window_in_seconds,
+                            'maximum_concurrency':
+                                resource.maximum_concurrency}
                 )
             ] + self._batch_record_resource(
                 'sqs_event', resource.resource_name, {
@@ -753,6 +753,7 @@ class PlanStage(object):
                         'batch_size': resource.batch_size,
                         'maximum_batching_window_in_seconds':
                             resource.maximum_batching_window_in_seconds,
+                        'maximum_concurrency': resource.maximum_concurrency,
                         'function_name': function_arn},
                 output_var=uuid_varname,
             ), 'Subscribing %s to SQS queue %s\n'

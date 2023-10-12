@@ -1,9 +1,11 @@
 # pylint: disable=line-too-long
 from __future__ import annotations
-from dataclasses import dataclass, field
+
 import enum
-from typing import List, Dict, Optional as Opt, Any, TypeVar, Union, Set  # noqa
-from typing import cast
+from dataclasses import dataclass, field
+from typing import Any, Dict, List
+from typing import Optional as Opt  # noqa
+from typing import Set, TypeVar, Union, cast
 
 
 class Placeholder(enum.Enum):
@@ -348,6 +350,7 @@ class SQSEventSource(FunctionEventSubscriber):
     queue: Union[str, QueueARN]
     batch_size: int
     maximum_batching_window_in_seconds: int
+    maximum_concurrency: Opt[int]
 
 
 @dataclass

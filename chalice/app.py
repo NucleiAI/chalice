@@ -1,31 +1,40 @@
 """Chalice app and routing code."""
 # pylint: disable=too-many-lines,ungrouped-imports
-import re
-import sys
-import os
-import logging
-import json
-import traceback
-import decimal
 import base64
 import copy
-import functools
 import datetime
+import decimal
+import functools
+import json
+import logging
+import os
+import re
+import sys
+import traceback
 from collections import defaultdict
+from collections.abc import Mapping, MutableMapping
 
 # Implementation note:  This file is intended to be a standalone file
 # that gets copied into the lambda deployment package.  It has no dependencies
 # on other parts of chalice, so it can stay small and lightweight, with minimal
 # startup overhead.
 from urllib.parse import unquote_plus
-from collections.abc import Mapping
-from collections.abc import MutableMapping
-
 
 __version__: str = '1.29.0'
 
-from typing import List, Dict, Any, Optional, Sequence, Union, Callable, Set, \
-    Iterator, TYPE_CHECKING, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+)
 
 if TYPE_CHECKING:
     from chalice.local import LambdaContext
@@ -765,7 +774,8 @@ class DecoratorAPI(object):
     def on_sqs_message(self, queue: Optional[str] = None, batch_size: int = 1,
                        name: Optional[str] = None,
                        queue_arn: Optional[str] = None,
-                       maximum_batching_window_in_seconds: int = 0
+                       maximum_batching_window_in_seconds: int = 0,
+                       maximum_concurrency: Optional[int] = None
                        ) -> Callable[..., Any]:
         return self._create_registration_function(
             handler_type='on_sqs_message',
@@ -775,7 +785,8 @@ class DecoratorAPI(object):
                 'queue_arn': queue_arn,
                 'batch_size': batch_size,
                 'maximum_batching_window_in_seconds':
-                    maximum_batching_window_in_seconds
+                    maximum_batching_window_in_seconds,
+                'maximum_concurrency': maximum_concurrency
             }
         )
 
@@ -1098,6 +1109,7 @@ class _HandlerRegistration(object):
             batch_size=kwargs['batch_size'],
             maximum_batching_window_in_seconds=kwargs[
                 'maximum_batching_window_in_seconds'],
+            maximum_concurrency=kwargs['maximum_concurrency']
         )
         self.event_sources.append(sqs_config)
 
@@ -1622,13 +1634,15 @@ class SNSEventConfig(BaseEventSourceConfig):
 class SQSEventConfig(BaseEventSourceConfig):
     def __init__(self, name: str, handler_string: str, queue: Optional[str],
                  queue_arn: Optional[str], batch_size: int,
-                 maximum_batching_window_in_seconds: int):
+                 maximum_batching_window_in_seconds: int,
+                 maximum_concurrency: Optional[int]):
         super(SQSEventConfig, self).__init__(name, handler_string)
         self.queue: Optional[str] = queue
         self.queue_arn: Optional[str] = queue_arn
         self.batch_size: int = batch_size
         self.maximum_batching_window_in_seconds: int = \
             maximum_batching_window_in_seconds
+        self.maximum_concurrency = maximum_concurrency
 
 
 class KinesisEventConfig(BaseEventSourceConfig):

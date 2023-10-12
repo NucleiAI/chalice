@@ -1,40 +1,39 @@
-import sys
 import base64
-import logging
-import json
+import collections
 import gzip
 import inspect
-import collections
+import json
+import logging
+import sys
 from copy import deepcopy
 from datetime import datetime
 
-import pytest
-from pytest import fixture
 import hypothesis.strategies as st
-from hypothesis import given, assume
+import pytest
 import six
+from hypothesis import assume, given
+from pytest import fixture
 
-from chalice import app
 from chalice import NotFoundError
-from chalice.test import Client
+from chalice import __version__ as chalice_version
+from chalice import app
 from chalice.app import (
     APIGateway,
+    BadRequestError,
+    ChaliceUnhandledError,
+    ConvertToMiddleware,
+    MultiDict,
     Request,
     Response,
-    handle_extra_types,
-    MultiDict,
-    WebsocketEvent,
-    BadRequestError,
-    WebsocketDisconnectedError,
-    WebsocketEventSourceHandler,
-    ConvertToMiddleware,
     WebsocketAPI,
-    ChaliceUnhandledError,
+    WebsocketDisconnectedError,
+    WebsocketEvent,
+    WebsocketEventSourceHandler,
+    handle_extra_types,
 )
-from chalice import __version__ as chalice_version
-from chalice.deploy.validate import ExperimentalFeatureError
-from chalice.deploy.validate import validate_feature_flags
-
+from chalice.deploy.validate import ExperimentalFeatureError, \
+    validate_feature_flags
+from chalice.test import Client
 
 # These are used to generate sample data for hypothesis tests.
 STR_MAP = st.dictionaries(st.text(), st.text())
@@ -1988,6 +1987,7 @@ def test_can_create_sqs_handler(sample_app):
     assert event.batch_size == 200
     assert event.maximum_batching_window_in_seconds == 0
     assert event.handler_string == 'app.handler'
+    assert event.maximum_concurrency is None
 
 
 def test_can_set_sqs_handler_name(sample_app):
@@ -2009,6 +2009,17 @@ def test_can_set_sqs_handler_maximum_batching_window_in_seconds(sample_app):
     assert len(sample_app.event_sources) == 1
     event = sample_app.event_sources[0]
     assert event.maximum_batching_window_in_seconds == 60
+
+
+def test_can_set_sqs_handler_maximum_concurrency(sample_app):
+    @sample_app.on_sqs_message(
+        queue='MyQueue', maximum_concurrency=10)
+    def handler(event):
+        pass
+
+    assert len(sample_app.event_sources) == 1
+    event = sample_app.event_sources[0]
+    assert event.maximum_concurrency == 10
 
 
 def test_can_map_sqs_event(sample_app):
