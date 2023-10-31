@@ -2,10 +2,50 @@
 AWS Chalice - Nuclei Fork
 =========================
 
-This is a fork of aws/chalice which contains custom features:
+This is a fork of aws/chalice which contains custom features/fixes:
 
 * Added option to configure the Ephemeral Storage available to a function.
 * Added option to configure Maximum Concurrency for an SQS trigger.
+* Fixed middleware for non-route blueprint functions
+
+There are a few caveats with blueprint middleware:
+
+* Registering a middleware function on a Blueprint just registers it on the
+  app. There is no support for registering a middleware function on JUST the
+  blueprint.
+
+* For the middleware to work, you must import the chalice app file AFTER
+  instantiating the blueprint, this must be done AFTER the instantiation to
+  prevent import cycles. See the below example.
+
+.. code-block:: python
+
+    #### FILE app.py ####
+    from chalice import Chalice
+    from chalicelib.a_blueprint import a_bp
+
+    def noop_middleware(event, get_response):
+        print("Hello world from Middleware")
+        return get_response(event)
+
+    app = Chalice(__name__)
+
+    # The ordering of these registrations is NOT important
+    app.register_blueprint(a_bp)
+    app.register_middleware(noop_middleware, 'all')
+
+.. code-block:: python
+
+    #### FILE chalicelib/a_blueprint.py ####
+    from chalice import Blueprint
+
+    a_bp = Blueprint(__name__)
+
+    import app # AFTER the instantiation of `a_bp`
+
+    @a_bp.schedule("rate(1 hour)")
+    def hourly(event):
+        print("Hello World from a Blueprint")
 
 
 .. image:: https://badges.gitter.im/awslabs/chalice.svg

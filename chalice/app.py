@@ -2243,8 +2243,17 @@ class Blueprint(DecoratorAPI):
         self._deferred_registrations.append(_register_blueprint_handler)
 
     def _get_middleware_handlers(self, event_type: str) -> List:
-        # This will get filled in later during the registration process.
-        return []
+        # This was modified to fix middleware for blueprints...
+        # In order to properly function, the blueprint needs to have imported
+        # the app which it is a blueprint for.
+        if self._current_app is None:
+            logging.getLogger(self._import_name).warning("The Blueprint \
+%s does not have access to the Chalice app during execution. \
+This will cause middleware to not function for this \
+Blueprint", self._import_name)
+            return []
+        # pylint: disable=protected-access
+        return self._current_app._get_middleware_handlers(event_type)
 
 
 # This class is used to convert any existing/3rd party decorators
